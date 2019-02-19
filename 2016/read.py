@@ -52,9 +52,8 @@ def read(ip_file):
     print ('Warehouses Data: ', warehouse_data)
     print ('Orders Data: ', order_data)
 
-
     
-    return warehouse_data, order_data
+    return [map_rows, map_cols], total_drones, total_turns, warehouse_data, order_data
 
 
 
