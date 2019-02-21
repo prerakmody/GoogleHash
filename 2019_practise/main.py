@@ -85,13 +85,15 @@ def postprocessFindSlicesAroundCell(pizza_slicemap, row, col):
 
     for dir_id, direction in enumerate(dirs):
         flag = 0
-        for i in range (direction[0], direction[1], direction[2]):
-            switch (dir_id):
-            if (dir_id == 1):
+        for i in range (direction[0], direction[1], direction[2]):            
+            if (dir_id == 0):
                 item = [i, col]
+            if (dir_id == 1):
+                item = [row, i]
             if (dir_id == 2):
                 item = [row, i]
-            if (dir_id == 3)
+            if (dir_id == 3):
+                item = [i, col]
             if (pizza_slicemap[i][col] != 0):
                 news.append([i, col])
                 flag = 1
