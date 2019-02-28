@@ -9,6 +9,8 @@ def submit(solution):
 
 """
 with open(filename, 'w') as fp:
-    fp.writeline([1,2,3,4])
+    for slide in solution:
+        picIds = [str(pic.id) for pic in slide]
+            fp.writeline(" ".join(picIds))
     
 """

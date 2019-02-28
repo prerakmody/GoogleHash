@@ -1,7 +1,8 @@
-import read, submit
+import read, submit2
 import sys
 import numpy as np 
 import time
+from operator import attrgetter
 # slide = [photo] or [photo1, photo2]
 
 def findInterestingScore(slide1, slide2):
@@ -75,7 +76,7 @@ def dividePhotos(photos):
     return horizontal, vertical
 
 # find the slide of photos most interesting to slide1
-def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0):
+def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0, limit=50):
     #if verbose : print("photos=" + str(len(photos)))
     
     topScore = -1
@@ -86,7 +87,7 @@ def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0):
     if verbose:
         tic = time.time()
     # find most interesting horizontal slide
-    for i in range(0, min(len(horizontal), 10)):
+    for i in range(0, min(len(horizontal), limit)):
         photo = horizontal[i]
         slide2 = [photo]
         score = findInterestingScore(slide1, slide2)
@@ -105,7 +106,7 @@ def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0):
         #photo1 = vertical[i]
     if (len(vertical) >= 2):
         photo1 = vertical[0]
-        for j in range(1, min(len(vertical), 10)):
+        for j in range(1, min(len(vertical), limit)):
             photo2 = vertical[j]
             slide2 = [photo1, photo2]
             score = findInterestingScore(slide1, slide2)
@@ -113,7 +114,7 @@ def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0):
                 topScore = score
                 topSlide = slide2
         if verbose: print (time.time() - tic, 's')
-    return topSlide
+    return topSlide, topScore
 
 # remove photos in slide from photos
 def removeSlideFromPhotos(photos, slide):
@@ -123,10 +124,13 @@ def removeSlideFromPhotos(photos, slide):
         except ValueError:
             pass
 
-def solve(photos):
+def solve(photos, verbose):
     slideshow = []
 
     horizontal, vertical = dividePhotos(photos)
+
+    vertical = sorted(vertical, key=attrgetter('tagCount'), reverse=True)
+    horizontal = sorted(horizontal, key=attrgetter('tagCount'), reverse=True)
 
     slide1 = findFirstSlide(photos)
     slideshow.append(slide1)
@@ -136,9 +140,9 @@ def solve(photos):
 
     i = 0
     while (findFirstSlide(photos) != None):        
-        i = i + 1
-        #print("slide " + str(i) + ", remaining photos: " + str(len(photos)))
-        slide2 = findMostInterestingSlide(slide1, horizontal, vertical, 0)
+        i = i + 1        
+        slide2, score = findMostInterestingSlide(slide1, horizontal, vertical, 0, 50)
+        if verbose: print("slide: " + str(i) + ", score: " + str(score) + ", remaining photos: " + str(len(photos)))
         slideshow.append(slide2)
         removeSlideFromPhotos(photos, slide2)
         removeSlideFromPhotos(horizontal, slide2)
@@ -149,13 +153,19 @@ def solve(photos):
     return slideshow
 
 
-filename = sys.argv[1]
-N, photos = read.read(filename)
-
-slideshow = solve(photos)
 
 # print('slideshow')
 # print(slideshow)
 
 # print('submit')
-submit.submit(slideshow)
+
+##############################################
+
+if len(sys.argv) == 3:
+    filename_ip = sys.argv[1]
+    filename_op = sys.argv[2]
+    N, photos = read.read(filename_ip)
+    slideshow = solve(photos, verbose=1)
+    submit2.submit(slideshow, filename_op)
+else:
+    print ('Not enough arguments!')

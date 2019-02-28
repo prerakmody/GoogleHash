@@ -1,24 +1,9 @@
-# def top100Vertical(verticalImages, inputImage):
-#     top100 = []
-#     for each in verticalImages:
-
-#     pass
-
-
-# if __name__ == "__main__":
-#     top100 = {}
-#     for verticalImage in enumerate(verticalImages):
-#         top100[verticalImage.id] = top100Vertical(verticalImages, verticalImage)
-    
-#     return top100
-
-
-import read, submit
+import read, submit2
 import sys
 import numpy as np 
 import time
 from operator import attrgetter
-from collections import namedtuple
+import random
 # slide = [photo] or [photo1, photo2]
 
 def findInterestingScore(slide1, slide2):
@@ -92,81 +77,96 @@ def dividePhotos(photos):
     return horizontal, vertical
 
 # find the slide of photos most interesting to slide1
-def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0):    
-
+def findMostInterestingSlide(slide1, horizontal, vertical, verbose=0):
+    #if verbose : print("photos=" + str(len(photos)))
+    
+    print ('*****************')
     topScore = -1
-    topPhoto = []
-    if verbose : print ('************')
     topSlide = None
+    N = 30
     
     tic = 0
     if verbose:
         tic = time.time()
     # find most interesting horizontal slide
-    for photo in horizontal:
+    topI = -1
+    for i in range(0, min(len(horizontal), N)):
+        photo = horizontal[i]
         slide2 = [photo]
         score = findInterestingScore(slide1, slide2)
         if (score > topScore):
             topScore = score
             topSlide = slide2
-            topPhoto   = [photo]
-    if verbose : print ('Hor : ', time.time() - tic, 's')
+            topI = i
+    print ('best Horizontal :', topI)
+    if verbose : print (time.time() - tic, 's')
+
 
     if verbose : tic = time.time()
-    # print (len(vertical))
-
+    # tmpVertical = vertical[:10] + random.samples(vertical[10:], 10)
+    topI = -1
     if (len(vertical) >= 2):
         photo1 = vertical[0]
-        for j in range(1, len(vertical[:10])):
+        for j in range(1, min(len(vertical), N)):
             photo2 = vertical[j]
-            slide2 = [photo1, photo2]
+            slide2 = [photo1, photo2] 
             score = findInterestingScore(slide1, slide2)
             if (score > topScore):
                 topScore = score
                 topSlide = slide2
-                topPhoto = [photo1, photo2]
-        if verbose: print ('Ver : ', time.time() - tic, 's')
+                topI = i   
+        if verbose: print (time.time() - tic, 's')
     
-    # Step3 : Removal Operation
-    for each in topPhoto:
-        
+    print ('best Vertical :', topI)
     return topSlide
 
 # remove photos in slide from photos
 def removeSlideFromPhotos(photos, slide):
     for photo in slide:
-        photos.remove(photo)
+        try:
+            photos.remove(photo)
+        except ValueError:
+            pass
 
-def solve(photos):
+def solve(photos, verbose=0):
     slideshow = []
+
+    ticc = -1
+    if verbose : ticc = time.time()
+    horizontal, vertical = dividePhotos(photos)
+
+    vertical = sorted(vertical, key=attrgetter('tagCount'), reverse=True)
+    horizontal = sorted(horizontal, key=attrgetter('tagCount'), reverse=True)
 
     slide1 = findFirstSlide(photos)
     slideshow.append(slide1)
-    horizontal, vertical = dividePhotos(photos)
-    vertical = sorted(vertical, key=attrgetter('tagCount'))
     removeSlideFromPhotos(photos, slide1)
+    removeSlideFromPhotos(horizontal, slide1)
+    removeSlideFromPhotos(vertical, slide1)
 
     i = 0
     while (findFirstSlide(photos) != None):        
         i = i + 1
-        #print(i)
+        #print("slide " + str(i) + ", remaining photos: " + str(len(photos)))
         slide2 = findMostInterestingSlide(slide1, horizontal, vertical, 1)
         slideshow.append(slide2)
         removeSlideFromPhotos(photos, slide2)
+        removeSlideFromPhotos(horizontal, slide2)
+        removeSlideFromPhotos(vertical, slide2)
 
         slide1 = slide2
 
+    if verbose: print (time.time() - ticc, 's')
     return slideshow
 
 
-filename = sys.argv[1]
-N, photos = read.read(filename)
-slideshow = solve(photos)
+##############################################
 
-# print('slideshow')
-# print(slideshow)
-
-# print('submit')
-submit.submit(slideshow)
-
-
+if len(sys.argv) == 3:
+    filename_ip = sys.argv[1]
+    filename_op = sys.argv[2]
+    N, photos = read.read(filename_ip)
+    slideshow = solve(photos, verbose=0)
+    submit2.submit(slideshow, filename_op)
+else:
+    print ('Not enough arguments!')
